@@ -28,3 +28,18 @@ export interface SearchResult {
   lat: number;
   lng: number;
 }
+
+export interface AddressSearchItem {
+  roadAddress: string;
+  jibunAddress: string;
+  englishAddress: string;
+  x: string;
+  y: string;
+  distance: number;
+  addressElements: Array<{
+    types: string[];
+    longName: string;
+    shortName: string;
+    code: string;
+  }>;
+}

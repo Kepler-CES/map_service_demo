@@ -9,7 +9,9 @@ import { searchAddress } from '@/features/search-address/lib/geocoder';
 import { useMapStore } from '@/entities/marker/model/store';
 import { useFavoritesStore } from '@/entities/place/model/store';
 import { Button } from '@/shared/ui/button';
-import { PlusIcon } from '@radix-ui/react-icons';
+import { Card, CardContent } from '@/shared/ui/card';
+import { PlusIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import type { SearchResult } from '@/shared/types';
 
 export const MapPage = () => {
   const { mapInstance, setCenter, addMarker, clearMarkers } = useMapStore();
@@ -17,40 +19,53 @@ export const MapPage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(true);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(true);
 
   const handleSearch = async (query: string) => {
     setIsSearching(true);
     setSearchError(null);
+    setSearchResults([]);
 
     try {
-      const result = await searchAddress(query);
+      const results = await searchAddress(query);
 
-      if (!result) {
+      if (results.length === 0) {
         setSearchError('주소를 찾을 수 없습니다.');
         return;
       }
 
-      // 지도 중심 이동
-      setCenter(result.lat, result.lng);
-      if (mapInstance) {
-        mapInstance.setCenter(new naver.maps.LatLng(result.lat, result.lng));
+      setSearchResults(results);
+      setShowSearchResults(true);
 
-        // 기존 마커 제거
-        clearMarkers();
-
-        // 새 마커 추가
-        const marker = new naver.maps.Marker({
-          position: new naver.maps.LatLng(result.lat, result.lng),
-          map: mapInstance,
-        });
-
-        addMarker(marker);
+      // 검색 결과가 1개인 경우 자동으로 선택
+      if (results.length === 1) {
+        handleResultSelect(results[0]);
       }
     } catch (error) {
       setSearchError('검색 중 오류가 발생했습니다.');
       console.error(error);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleResultSelect = (result: SearchResult) => {
+    // 지도 중심 이동
+    setCenter(result.lat, result.lng);
+    if (mapInstance) {
+      mapInstance.setCenter(new naver.maps.LatLng(result.lat, result.lng));
+
+      // 기존 마커 제거
+      clearMarkers();
+
+      // 새 마커 추가
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(result.lat, result.lng),
+        map: mapInstance,
+      });
+
+      addMarker(marker);
     }
   };
 
@@ -100,6 +115,53 @@ export const MapPage = () => {
           )}
           {searchError && (
             <p className="text-sm text-destructive mt-2">{searchError}</p>
+          )}
+          {searchResults.length > 1 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">
+                  검색 결과 ({searchResults.length}개)
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSearchResults(!showSearchResults)}
+                  className="h-8 px-2"
+                >
+                  {showSearchResults ? (
+                    <>
+                      접기 <ChevronUpIcon className="ml-1 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      펼치기 <ChevronDownIcon className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+              {showSearchResults && (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {searchResults.map((result, index) => (
+                    <Card
+                      key={index}
+                      className="cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => handleResultSelect(result)}
+                    >
+                      <CardContent className="p-3">
+                        <p className="font-medium text-sm">
+                          {result.roadAddress || result.address}
+                        </p>
+                        {result.roadAddress && result.address && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            지번: {result.address}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </header>
