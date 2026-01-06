@@ -1,18 +1,29 @@
 /**
  * 지도 페이지
  */
-import { useState } from 'react';
-import { MapViewer } from '@/widgets/map-viewer/ui/MapViewer';
-import { SearchBar } from '@/widgets/search-bar/ui/SearchBar';
-import { FavoritesList } from '@/widgets/favorites-list/ui/FavoritesList';
-import { SearchResults } from '@/widgets/search-results/ui/SearchResults';
-import { searchAddress, reverseGeocode } from '@/features/search-address/lib/geocoder';
 import { useMapStore } from '@/entities/marker/model/store';
 import { useFavoritesStore } from '@/entities/place/model/store';
-import { Button } from '@/shared/ui/button';
-import { BottomSheet, Sidebar } from '@/shared/ui/bottom-sheet';
-import { PlusIcon, ChevronUpIcon, ChevronDownIcon, Cross2Icon } from '@radix-ui/react-icons';
+import {
+  reverseGeocode,
+  searchAddress,
+} from '@/features/search-address/lib/geocoder';
+import { spacing, zIndex } from '@/shared/config/design-system';
+import { responsive } from '@/shared/lib/utils';
 import type { SearchResult } from '@/shared/types';
+import { BottomSheet, Sidebar } from '@/shared/ui/bottom-sheet';
+import { Button } from '@/shared/ui/button';
+import { DesktopOnly, MobileOnly } from '@/shared/ui/responsive';
+import { FavoritesList } from '@/widgets/favorites-list/ui/FavoritesList';
+import { MapViewer } from '@/widgets/map-viewer/ui/MapViewer';
+import { SearchBar } from '@/widgets/search-bar/ui/SearchBar';
+import { SearchResults } from '@/widgets/search-results/ui/SearchResults';
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  Cross2Icon,
+  PlusIcon,
+} from '@radix-ui/react-icons';
+import { useState } from 'react';
 
 export const MapPage = () => {
   const { mapInstance, setCenter, addMarker, clearMarkers } = useMapStore();
@@ -126,19 +137,25 @@ export const MapPage = () => {
     <div className="h-full flex flex-col">
       {/* 헤더 - 모바일: 컴팩트, 데스크탑: 검색 + 토글 버튼 */}
       <header className="border-b bg-background flex-shrink-0">
-        <div className="container-responsive py-3 md:py-4">
+        <div
+          className={`${spacing.container.responsive} ${responsive({
+            mobile: 'py-3',
+            desktop: 'py-4',
+          })}`}
+        >
           <div className="flex gap-2 items-center">
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
             {/* 데스크탑 전용 토글 버튼 */}
-            <Button
-              variant="outline"
-              onClick={() => setShowFavoritesSidebar(!showFavoritesSidebar)}
-              className="hidden md:flex"
-            >
-              {showFavoritesSidebar ? '목록 숨기기' : '목록 보기'}
-            </Button>
+            <DesktopOnly>
+              <Button
+                variant="outline"
+                onClick={() => setShowFavoritesSidebar(!showFavoritesSidebar)}
+              >
+                {showFavoritesSidebar ? '목록 숨기기' : '목록 보기'}
+              </Button>
+            </DesktopOnly>
           </div>
 
           {/* 검색 상태 메시지 */}
@@ -151,42 +168,44 @@ export const MapPage = () => {
 
           {/* 데스크탑: 검색 결과를 헤더 아래 표시 */}
           {searchResults.length > 0 && (
-            <div className="hidden md:block mt-4 rounded-lg border bg-card">
-              {/* 헤더: 접기/펼치기 + 닫기 */}
-              <div className="flex items-center justify-between p-3 border-b">
-                <button
-                  onClick={() => setShowSearchResults(!showSearchResults)}
-                  className="flex items-center gap-2 hover:text-primary transition-colors"
-                >
-                  <span className="font-semibold text-sm">
-                    검색 결과 ({searchResults.length}개)
-                  </span>
-                  {showSearchResults ? (
-                    <ChevronUpIcon className="h-4 w-4" />
-                  ) : (
-                    <ChevronDownIcon className="h-4 w-4" />
-                  )}
-                </button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCloseSearchResults}
-                  className="h-8 w-8 p-0"
-                >
-                  <Cross2Icon className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* 검색 결과 목록 */}
-              {showSearchResults && (
-                <div className="max-h-80 overflow-y-auto">
-                  <SearchResults
-                    results={searchResults}
-                    onResultSelect={handleResultSelect}
-                  />
+            <DesktopOnly>
+              <div className="mt-4 rounded-lg border bg-card">
+                {/* 헤더: 접기/펼치기 + 닫기 */}
+                <div className="flex items-center justify-between p-3 border-b">
+                  <button
+                    onClick={() => setShowSearchResults(!showSearchResults)}
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                  >
+                    <span className="font-semibold text-sm">
+                      검색 결과 ({searchResults.length}개)
+                    </span>
+                    {showSearchResults ? (
+                      <ChevronUpIcon className="h-4 w-4" />
+                    ) : (
+                      <ChevronDownIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCloseSearchResults}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Cross2Icon className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-            </div>
+
+                {/* 검색 결과 목록 */}
+                {showSearchResults && (
+                  <div className="max-h-80 overflow-y-auto">
+                    <SearchResults
+                      results={searchResults}
+                      onResultSelect={handleResultSelect}
+                    />
+                  </div>
+                )}
+              </div>
+            </DesktopOnly>
           )}
         </div>
       </header>
@@ -200,7 +219,11 @@ export const MapPage = () => {
           {/* 플로팅 버튼 - 모바일: bottom sheet 위에 표시 */}
           <Button
             onClick={handleAddFavorite}
-            className="absolute bottom-20 right-4 z-[60] md:bottom-4 md:z-10"
+            className={`absolute right-4 ${responsive({
+              mobile: 'bottom-20',
+              desktop: 'bottom-4',
+            })}`}
+            style={{ zIndex: zIndex.popover }}
             size="lg"
           >
             <PlusIcon className="mr-2 h-5 w-5" />
@@ -209,37 +232,43 @@ export const MapPage = () => {
         </div>
 
         {/* 데스크탑: 관심 목록 사이드바 */}
-        <Sidebar
-          title="관심 목록"
-          isOpen={showFavoritesSidebar}
-          onClose={() => setShowFavoritesSidebar(false)}
-        >
-          <FavoritesList onPlaceClick={handlePlaceClick} />
-        </Sidebar>
+        <DesktopOnly>
+          <Sidebar
+            title="관심 목록"
+            isOpen={showFavoritesSidebar}
+            onClose={() => setShowFavoritesSidebar(false)}
+          >
+            <FavoritesList onPlaceClick={handlePlaceClick} />
+          </Sidebar>
+        </DesktopOnly>
       </main>
 
       {/* 모바일: 검색 결과 Bottom Sheet */}
-      {searchResults.length > 0 && (
-        <BottomSheet
-          title="검색 결과"
-          defaultExpanded={true}
-          onClose={handleCloseSearchResults}
-        >
-          <SearchResults
-            results={searchResults}
-            onResultSelect={handleResultSelect}
-          />
-        </BottomSheet>
-      )}
+      <MobileOnly>
+        {searchResults.length > 0 && (
+          <BottomSheet
+            title="검색 결과"
+            defaultExpanded={true}
+            onClose={handleCloseSearchResults}
+          >
+            <SearchResults
+              results={searchResults}
+              onResultSelect={handleResultSelect}
+            />
+          </BottomSheet>
+        )}
+      </MobileOnly>
 
       {/* 모바일: 관심 목록 Bottom Sheet (검색 결과가 없을 때만 표시) */}
-      {searchResults.length === 0 && (
-        <BottomSheet title="관심 목록" defaultExpanded={false}>
-          <div className="p-4">
-            <FavoritesList onPlaceClick={handlePlaceClick} />
-          </div>
-        </BottomSheet>
-      )}
+      <MobileOnly>
+        {searchResults.length === 0 && (
+          <BottomSheet title="관심 목록" defaultExpanded={false}>
+            <div className="p-4">
+              <FavoritesList onPlaceClick={handlePlaceClick} />
+            </div>
+          </BottomSheet>
+        )}
+      </MobileOnly>
     </div>
   );
 };
