@@ -53,11 +53,21 @@
   * {
     @apply border-border;
   }
+  html,
   body {
     @apply bg-background text-foreground;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+    height: 100%;
+    /* Safari 모바일 대응 */
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  #root {
+    height: 100%;
   }
 }
 
@@ -66,9 +76,43 @@
   @apply w-full h-full relative;
 }
 
+/* 네이버 지도 컨트롤 z-index 조정 (Bottom Sheet보다 낮게) */
+.map-container :global(.naver-map-logo),
+.map-container :global(.naver-map-attribution),
+.map-container :global(.nmap_control_button) {
+  z-index: 1 !important;
+}
+
+/* 네이버 지도의 모든 자식 요소 z-index 제한 */
+.map-container > div {
+  position: relative;
+  z-index: 1;
+}
+
 /* 반응형 유틸리티 */
 @layer utilities {
   .container-responsive {
     @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* 터치 최적화 */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 안전 영역 (Safe Area) */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 스크롤 최적화 */
+  .scroll-smooth {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 }

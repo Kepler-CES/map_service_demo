@@ -5,12 +5,13 @@ import { useState } from 'react';
 import { MapViewer } from '@/widgets/map-viewer/ui/MapViewer';
 import { SearchBar } from '@/widgets/search-bar/ui/SearchBar';
 import { FavoritesList } from '@/widgets/favorites-list/ui/FavoritesList';
+import { SearchResults } from '@/widgets/search-results/ui/SearchResults';
 import { searchAddress, reverseGeocode } from '@/features/search-address/lib/geocoder';
 import { useMapStore } from '@/entities/marker/model/store';
 import { useFavoritesStore } from '@/entities/place/model/store';
 import { Button } from '@/shared/ui/button';
-import { Card, CardContent } from '@/shared/ui/card';
-import { PlusIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { BottomSheet, Sidebar } from '@/shared/ui/bottom-sheet';
+import { PlusIcon, ChevronUpIcon, ChevronDownIcon, Cross2Icon } from '@radix-ui/react-icons';
 import type { SearchResult } from '@/shared/types';
 
 export const MapPage = () => {
@@ -18,9 +19,9 @@ export const MapPage = () => {
   const { addFavorite } = useFavoritesStore();
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [showFavorites, setShowFavorites] = useState(true);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(true);
+  const [showFavoritesSidebar, setShowFavoritesSidebar] = useState(true);
 
   const handleSearch = async (query: string) => {
     setIsSearching(true);
@@ -36,7 +37,7 @@ export const MapPage = () => {
       }
 
       setSearchResults(results);
-      setShowSearchResults(true);
+      setShowSearchResults(true); // 검색 결과 표시
 
       // 검색 결과가 1개인 경우 자동으로 선택
       if (results.length === 1) {
@@ -67,6 +68,14 @@ export const MapPage = () => {
 
       addMarker(marker);
     }
+
+    // 검색 결과는 유지하고 접기만 함 (모바일)
+    // 데스크탑에서는 그대로 유지
+  };
+
+  const handleCloseSearchResults = () => {
+    setSearchResults([]);
+    setShowSearchResults(true);
   };
 
   const handlePlaceClick = (lat: number, lng: number) => {
@@ -114,72 +123,67 @@ export const MapPage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* 헤더 */}
-      <header className="border-b bg-background">
-        <div className="container-responsive py-4">
-          <h1 className="text-2xl font-bold mb-4">지도 서비스</h1>
-          <div className="flex gap-2">
+    <div className="h-full flex flex-col">
+      {/* 헤더 - 모바일: 컴팩트, 데스크탑: 검색 + 토글 버튼 */}
+      <header className="border-b bg-background flex-shrink-0">
+        <div className="container-responsive py-3 md:py-4">
+          <div className="flex gap-2 items-center">
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
+            {/* 데스크탑 전용 토글 버튼 */}
             <Button
               variant="outline"
-              onClick={() => setShowFavorites(!showFavorites)}
+              onClick={() => setShowFavoritesSidebar(!showFavoritesSidebar)}
               className="hidden md:flex"
             >
-              {showFavorites ? '목록 숨기기' : '목록 보기'}
+              {showFavoritesSidebar ? '목록 숨기기' : '목록 보기'}
             </Button>
           </div>
+
+          {/* 검색 상태 메시지 */}
           {isSearching && (
             <p className="text-sm text-muted-foreground mt-2">검색 중...</p>
           )}
           {searchError && (
             <p className="text-sm text-destructive mt-2">{searchError}</p>
           )}
-          {searchResults.length > 1 && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium">
-                  검색 결과 ({searchResults.length}개)
-                </p>
+
+          {/* 데스크탑: 검색 결과를 헤더 아래 표시 */}
+          {searchResults.length > 0 && (
+            <div className="hidden md:block mt-4 rounded-lg border bg-card">
+              {/* 헤더: 접기/펼치기 + 닫기 */}
+              <div className="flex items-center justify-between p-3 border-b">
+                <button
+                  onClick={() => setShowSearchResults(!showSearchResults)}
+                  className="flex items-center gap-2 hover:text-primary transition-colors"
+                >
+                  <span className="font-semibold text-sm">
+                    검색 결과 ({searchResults.length}개)
+                  </span>
+                  {showSearchResults ? (
+                    <ChevronUpIcon className="h-4 w-4" />
+                  ) : (
+                    <ChevronDownIcon className="h-4 w-4" />
+                  )}
+                </button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowSearchResults(!showSearchResults)}
-                  className="h-8 px-2"
+                  onClick={handleCloseSearchResults}
+                  className="h-8 w-8 p-0"
                 >
-                  {showSearchResults ? (
-                    <>
-                      접기 <ChevronUpIcon className="ml-1 h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      펼치기 <ChevronDownIcon className="ml-1 h-4 w-4" />
-                    </>
-                  )}
+                  <Cross2Icon className="h-4 w-4" />
                 </Button>
               </div>
+
+              {/* 검색 결과 목록 */}
               {showSearchResults && (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {searchResults.map((result, index) => (
-                    <Card
-                      key={index}
-                      className="cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => handleResultSelect(result)}
-                    >
-                      <CardContent className="p-3">
-                        <p className="font-medium text-sm">
-                          {result.roadAddress || result.address}
-                        </p>
-                        {result.roadAddress && result.address && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            지번: {result.address}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="max-h-80 overflow-y-auto">
+                  <SearchResults
+                    results={searchResults}
+                    onResultSelect={handleResultSelect}
+                  />
                 </div>
               )}
             </div>
@@ -187,14 +191,16 @@ export const MapPage = () => {
         </div>
       </header>
 
-      {/* 메인 컨텐츠 */}
-      <main className="flex-1 flex overflow-hidden">
+      {/* 메인 컨텐츠 - 지도 + 사이드바 */}
+      <main className="flex-1 flex overflow-hidden relative">
         {/* 지도 영역 */}
         <div className="flex-1 relative">
           <MapViewer />
+
+          {/* 플로팅 버튼 - 모바일: bottom sheet 위에 표시 */}
           <Button
             onClick={handleAddFavorite}
-            className="absolute bottom-4 right-4 z-10"
+            className="absolute bottom-20 right-4 z-[60] md:bottom-4 md:z-10"
             size="lg"
           >
             <PlusIcon className="mr-2 h-5 w-5" />
@@ -202,24 +208,38 @@ export const MapPage = () => {
           </Button>
         </div>
 
-        {/* 사이드바 - 관심 목록 */}
-        {showFavorites && (
-          <aside className="w-full md:w-80 lg:w-96 border-l bg-background overflow-y-auto p-4">
-            <FavoritesList onPlaceClick={handlePlaceClick} />
-          </aside>
-        )}
+        {/* 데스크탑: 관심 목록 사이드바 */}
+        <Sidebar
+          title="관심 목록"
+          isOpen={showFavoritesSidebar}
+          onClose={() => setShowFavoritesSidebar(false)}
+        >
+          <FavoritesList onPlaceClick={handlePlaceClick} />
+        </Sidebar>
       </main>
 
-      {/* 모바일 하단 토글 버튼 */}
-      <div className="md:hidden border-t p-2 bg-background">
-        <Button
-          variant="outline"
-          onClick={() => setShowFavorites(!showFavorites)}
-          className="w-full"
+      {/* 모바일: 검색 결과 Bottom Sheet */}
+      {searchResults.length > 0 && (
+        <BottomSheet
+          title="검색 결과"
+          defaultExpanded={true}
+          onClose={handleCloseSearchResults}
         >
-          {showFavorites ? '목록 숨기기' : '목록 보기'}
-        </Button>
-      </div>
+          <SearchResults
+            results={searchResults}
+            onResultSelect={handleResultSelect}
+          />
+        </BottomSheet>
+      )}
+
+      {/* 모바일: 관심 목록 Bottom Sheet (검색 결과가 없을 때만 표시) */}
+      {searchResults.length === 0 && (
+        <BottomSheet title="관심 목록" defaultExpanded={false}>
+          <div className="p-4">
+            <FavoritesList onPlaceClick={handlePlaceClick} />
+          </div>
+        </BottomSheet>
+      )}
     </div>
   );
 };
