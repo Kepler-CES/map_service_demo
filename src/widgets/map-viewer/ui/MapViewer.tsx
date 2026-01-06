@@ -36,7 +36,9 @@ export const MapViewer = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full bg-muted">
-        <p className="text-destructive">지도를 로드하는 중 오류가 발생했습니다.</p>
+        <p className="text-destructive">
+          지도를 로드하는 중 오류가 발생했습니다.
+        </p>
       </div>
     );
   }

@@ -24,7 +24,7 @@ export const useNaverMapScript = () => {
 
     const script = document.createElement('script');
     script.id = scriptId;
-    script.src = `${MAP_CONFIG.scriptUrl}${MAP_CONFIG.clientId}`;
+    script.src = `${MAP_CONFIG.scriptUrl}${MAP_CONFIG.clientId}&submodules=${MAP_CONFIG.submodules}`;
     script.async = true;
 
     // 디버깅 정보 출력

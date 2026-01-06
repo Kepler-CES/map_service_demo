@@ -4,7 +4,7 @@
 import type { SearchResult } from '@/shared/types';
 
 export const searchAddress = (
-  address: string
+  address: string,
 ): Promise<SearchResult | null> => {
   return new Promise((resolve, reject) => {
     if (!window.naver || !window.naver.maps) {
@@ -12,26 +12,38 @@ export const searchAddress = (
       return;
     }
 
-    const geocoder = new naver.maps.Service.Geocoder();
+    if (!window.naver.maps.Service) {
+      reject(new Error('네이버 지도 Geocoder 서비스가 로드되지 않았습니다.'));
+      return;
+    }
 
-    geocoder.addressToCoord(address, (status, response) => {
-      if (status !== naver.maps.Service.GeocodeStatus.OK) {
-        resolve(null);
-        return;
-      }
+    naver.maps.Service.geocode(
+      {
+        query: address,
+      },
+      (status, response) => {
+        if (status !== naver.maps.Service.Status.OK || !response) {
+          resolve(null);
+          return;
+        }
 
-      if (!response.v2 || !response.v2.addresses || response.v2.addresses.length === 0) {
-        resolve(null);
-        return;
-      }
+        if (
+          !response.v2 ||
+          !response.v2.addresses ||
+          response.v2.addresses.length === 0
+        ) {
+          resolve(null);
+          return;
+        }
 
-      const result = response.v2.addresses[0];
-      resolve({
-        address: result.jibunAddress,
-        roadAddress: result.roadAddress,
-        lat: parseFloat(result.y),
-        lng: parseFloat(result.x),
-      });
-    });
+        const result = response.v2.addresses[0];
+        resolve({
+          address: result.jibunAddress,
+          roadAddress: result.roadAddress,
+          lat: parseFloat(result.y),
+          lng: parseFloat(result.x),
+        });
+      },
+    );
   });
 };

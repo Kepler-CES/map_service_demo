@@ -17,7 +17,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 응답 인터셉터
@@ -27,5 +27,5 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );

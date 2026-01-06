@@ -115,7 +115,7 @@ declare global {
         function addListener(
           target: Map | Marker | unknown,
           eventName: string,
-          listener: (...args: unknown[]) => void
+          listener: (...args: unknown[]) => void,
         ): MapEventListener;
         function removeListener(listener: MapEventListener): void;
       }
@@ -126,31 +126,54 @@ declare global {
       }
 
       namespace Service {
-        class Geocoder {
-          addressToCoord(
-            address: string,
-            callback: (status: GeocodeStatus, response: GeocodeResponse) => void
-          ): void;
-          coordToAddress(
-            coord: LatLng | LatLngLiteral,
-            callback: (status: GeocodeStatus, response: GeocodeResponse) => void
-          ): void;
+        function geocode(
+          options: ServiceOptions,
+          callback: (status: Status, response?: GeocodeResponse) => void,
+        ): void;
+
+        interface ServiceOptions {
+          query?: string;
+          coordinate?: string;
+          filter?: string;
+          page?: number;
+          count?: number;
         }
 
-        enum GeocodeStatus {
-          OK = 'OK',
-          ERROR = 'ERROR',
+        enum Status {
+          OK = 200,
+          ERROR = 500,
         }
 
         interface GeocodeResponse {
+          result?: {
+            userquery: string;
+            total: number;
+            items: AddressItem[];
+          };
           v2?: {
             status: string;
-            addresses?: GeocodeAddress[];
+            addresses?: AddressItemV2[];
             errorMessage?: string;
           };
         }
 
-        interface GeocodeAddress {
+        interface AddressItem {
+          address: string;
+          addrdetail: {
+            country: string;
+            sido: string;
+            sigugun: string;
+            dongmyun: string;
+            rest: string;
+          };
+          isRoadAddress: boolean;
+          point: {
+            x: number;
+            y: number;
+          };
+        }
+
+        interface AddressItemV2 {
           roadAddress: string;
           jibunAddress: string;
           englishAddress: string;
