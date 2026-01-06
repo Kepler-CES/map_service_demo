@@ -62,7 +62,7 @@ declare global {
         getPosition(): LatLng;
         setTitle(title: string): void;
         getTitle(): string;
-        setIcon(icon: string | ImageIcon): void;
+        setIcon(icon: string | ImageIcon | HtmlIcon): void;
         setVisible(visible: boolean): void;
         getVisible(): boolean;
       }
@@ -70,7 +70,7 @@ declare global {
       interface MarkerOptions {
         position: LatLng | LatLngLiteral;
         map?: Map;
-        icon?: string | ImageIcon;
+        icon?: string | ImageIcon | HtmlIcon;
         title?: string;
         cursor?: string;
         clickable?: boolean;
@@ -85,6 +85,33 @@ declare global {
         scaledSize?: Size;
         origin?: Point;
         anchor?: Point;
+      }
+
+      interface HtmlIcon {
+        content: string;
+        size?: Size;
+        anchor?: Point;
+      }
+
+      class InfoWindow {
+        constructor(options?: InfoWindowOptions);
+        open(map: Map, anchor?: Marker | LatLng): void;
+        close(): void;
+        getMap(): Map | null;
+        setContent(content: string): void;
+        getContent(): string;
+      }
+
+      interface InfoWindowOptions {
+        content?: string;
+        maxWidth?: number;
+        backgroundColor?: string;
+        borderColor?: string;
+        borderWidth?: number;
+        anchorSize?: Size;
+        anchorSkew?: boolean;
+        anchorColor?: string;
+        pixelOffset?: Point;
       }
 
       class Size {
@@ -131,9 +158,18 @@ declare global {
           callback: (status: Status, response?: GeocodeResponse) => void,
         ): void;
 
+        function reverseGeocode(
+          options: ServiceOptions,
+          callback: (status: Status, response?: ReverseGeocodeResponse) => void,
+        ): void;
+
         interface ServiceOptions {
           query?: string;
           coordinate?: string;
+          coords?: LatLng | LatLngLiteral | string;
+          sourcecrs?: string;
+          targetcrs?: string;
+          orders?: string;
           filter?: string;
           page?: number;
           count?: number;
@@ -142,6 +178,11 @@ declare global {
         enum Status {
           OK = 200,
           ERROR = 500,
+        }
+
+        enum OrderType {
+          ADDR = 'addr',
+          ROAD_ADDR = 'roadaddr',
         }
 
         interface GeocodeResponse {

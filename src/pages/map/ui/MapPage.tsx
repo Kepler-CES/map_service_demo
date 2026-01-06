@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { MapViewer } from '@/widgets/map-viewer/ui/MapViewer';
 import { SearchBar } from '@/widgets/search-bar/ui/SearchBar';
 import { FavoritesList } from '@/widgets/favorites-list/ui/FavoritesList';
-import { searchAddress } from '@/features/search-address/lib/geocoder';
+import { searchAddress, reverseGeocode } from '@/features/search-address/lib/geocoder';
 import { useMapStore } from '@/entities/marker/model/store';
 import { useFavoritesStore } from '@/entities/place/model/store';
 import { Button } from '@/shared/ui/button';
@@ -76,20 +76,41 @@ export const MapPage = () => {
     }
   };
 
-  const handleAddFavorite = () => {
+  const handleAddFavorite = async () => {
     if (!mapInstance) return;
 
     const center = mapInstance.getCenter();
-    const newPlace = {
-      id: Date.now().toString(),
-      name: '새로운 장소',
-      address: `위도: ${center.lat()}, 경도: ${center.lng()}`,
-      lat: center.lat(),
-      lng: center.lng(),
-      createdAt: new Date().toISOString(),
-    };
+    const lat = center.lat();
+    const lng = center.lng();
 
-    addFavorite(newPlace);
+    try {
+      // 역지오코딩으로 주소 가져오기
+      const result = await reverseGeocode(lat, lng);
+
+      const newPlace = {
+        id: Date.now().toString(),
+        name: result?.roadAddress || result?.address || '새로운 장소',
+        address: result?.address || `위도: ${lat}, 경도: ${lng}`,
+        roadAddress: result?.roadAddress,
+        lat,
+        lng,
+        createdAt: new Date().toISOString(),
+      };
+
+      addFavorite(newPlace);
+    } catch (error) {
+      console.error('역지오코딩 실패:', error);
+      // 실패 시 기본값으로 저장
+      const newPlace = {
+        id: Date.now().toString(),
+        name: '새로운 장소',
+        address: `위도: ${lat}, 경도: ${lng}`,
+        lat,
+        lng,
+        createdAt: new Date().toISOString(),
+      };
+      addFavorite(newPlace);
+    }
   };
 
   return (
