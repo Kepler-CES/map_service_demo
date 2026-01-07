@@ -59,15 +59,16 @@
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
-    height: 100%;
-    /* Safari 모바일 대응 */
-    height: 100dvh;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+  }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
   }
   #root {
-    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }
 

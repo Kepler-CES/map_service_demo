@@ -134,7 +134,7 @@ export const MapPage = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col">
       {/* 헤더 - 모바일: 컴팩트, 데스크탑: 검색 + 토글 버튼 */}
       <header className="border-b bg-background flex-shrink-0">
         <div

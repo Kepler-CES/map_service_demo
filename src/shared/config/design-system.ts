@@ -130,6 +130,22 @@ export const touchTarget = {
 } as const;
 
 /**
+ * Input 컴포넌트 스타일
+ */
+export const input = {
+  height: {
+    mobile: 'h-8',
+    desktop: 'h-10',
+    responsive: 'h-8 md:h-10',
+  },
+  padding: {
+    mobile: 'pl-[10px] pr-3 py-2',
+    desktop: 'pl-3 pr-4 py-2',
+    responsive: 'pl-[10px] pr-3 py-2 md:pl-3 md:pr-4',
+  },
+} as const;
+
+/**
  * 애니메이션 듀레이션 (모바일에서는 더 짧게)
  */
 export const animation = {
